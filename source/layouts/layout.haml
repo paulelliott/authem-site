@@ -1,0 +1,82 @@
+!!! 5
+%html
+  %head
+    %meta(charset="UTF-8")
+    %title Fabrication
+    %link(rel='icon' type='image/png' href='/images/favicon.png')
+    %link(rel="apple-touch-icon-precomposed" href="/images/favicon-iphone.png")
+    %link(rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/favicon-ipad.png")
+    %link(rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/favicon-iphone4.png")
+    = stylesheet_link_tag 'application', media: "screen and (min-device-width: 1025px)"
+    = stylesheet_link_tag 'mobile', media: "screen and (max-device-width: 1024px)"
+    /[if IE]
+      = stylesheet_link_tag 'application'
+    = javascript_include_tag "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"
+    = javascript_include_tag 'application'
+    /[if IE]
+      = javascript_include_tag 'http://html5shiv.googlecode.com/svn/trunk/html5.js'
+    = javascript_include_tag 'http://use.typekit.com/vkq5xzv.js'
+    %meta(name="viewport" content="width=device-width, user-scalable=no")
+
+  %body
+    #wrapper
+      #catcher_back
+      #conveyor
+        #cutout
+        #items
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+          %div
+        #panel
+        #puncher
+        #glow
+        #placer
+          %div
+      #catcher
+        %div
+      %section#content
+        %hgroup
+          %h1 Fabrication
+          %h2 object generation for Ruby
+        .opening
+          %p Fabrication is a simple and powerful object generation library. Just define Fabricators -- the schematics for your objects -- and quickly Fabricate objects as needed anywhere in your app or specs.
+
+          %p Currently supported object types are:
+
+          %ul
+            %li= link_to "ActiveRecord Models", "http://guides.rubyonrails.org/active_record_querying.html"
+            %li= link_to "Mongoid Documents", "http://mongoid.org"
+            %li= link_to "Sequel Models", "http://sequel.rubyforge.org"
+            %li= link_to "DataMapper Resources", "http://datamapper.org"
+            %li= link_to "Keymaker Nodes", "https://github.com/therubymug/keymaker"
+            %li Any other classes
+
+        .main= yield
+    %footer#ventures
+      %article
+        %a(href="http://hashrocket.com")
+          %img(src="/images/ventures_logo.png")
+          %h1 This project is powered by Hashrocket
+          %p Hashrocket is a premiere Ruby on Rails design &amp; development consultancy.
+          %p
+            Learn more about us at
+            %span Hashrocket.com
+    :javascript
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-4408103-7']);
+      _gaq.push(['_setSiteSpeedSampleRate', 100]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
