@@ -3,9 +3,31 @@
 html, body
   background: #191919
 
+a
+  text-decoration: none
+  color: #38876d
+  &:hover
+    color: lighten(#38876d, 15%)
+    +transition(.5s)
+
 body
-  font-family: "Helvetica Neue", sans-serif
+  font: 14px/1.7 "Helvetica Neue", sans-serif
   color: #777777
+
+.wrapper
+  width: 1000px
+  margin: 0 auto
+  position: relative
+
+.box
+  background: #1a1a1a
+  border: 2px solid #242424
+  padding: 30px
+  position: relative
+  +box-sizing
+
+.nomargin-bottom
+  margin-bottom: 0
 
 +font-face("Economica", "economica-bold-webfont")
 +font-face("PT Mono", "ptmono-webfont")
@@ -13,11 +35,160 @@ body
 h1, h2, h3, h4, h5, h6
   font-weight: normal
   font-family: "Economica", sans-serif
+  line-height: 1
   text-transform: uppercase
 
-pre
+pre, code
   background: #121111
-  font: 13px "PT Mono", monospace
   color: #507467
-  padding: 5px 15px
   white-space: pre-wrap
+
+pre
+  padding: 5px 10px
+  margin-bottom: 25px
+
+code
+  font: 13px "PT Mono", monospace
+  padding: 5px
+
+pre
+  code
+    padding: 0
+
+header
+  background: transparent url("/images/bg_header.png")
+  height: 291px
+  h1
+    display: block
+    height: 291px
+    width: 679px
+    margin: 0 auto
+    text-indent: -9999px
+    background: transparent url("/images/logo.png") 0 0 no-repeat
+
+.content
+  position: relative
+  .wrapper
+    margin-top: 25px
+    &:before
+      background: transparent url("/images/bg_lines1.png") 0 0 no-repeat
+      content: ''
+      width: 576px
+      height: 25px
+      position: absolute
+      top: -25px
+      left: 221px
+    h2
+      font-size: 28px
+      color: #468772
+      text-align: center
+      display: block
+      margin: 0 auto
+      width: 670px
+    h3
+      font-size: 25px
+      color: #415c53
+      margin-bottom: 25px
+    h4
+      font-size: 20px
+      color: #9b9a9a
+      margin-bottom: 20px
+    p
+      margin-bottom: 10px
+    ul
+      list-style: square
+      margin: 0 0 25px 25px
+      &.nomargin-bottom
+        margin-bottom: 0
+      li
+        margin-bottom: 5px
+    .intro
+      margin: -2px auto 0
+      width: 605px
+    .left_callout, .right_callout
+      width: 160px
+      height: 165px
+      font-size: 12px
+      padding: 20px
+      position: absolute
+      top: 115px
+      h5
+        font-size: 20px
+        color: #415c53
+        margin-bottom: 10px
+    .left_callout
+      left: 0
+      &:before
+        border-top: 2px solid #242424
+        border-bottom: 2px solid #242424
+        height: 10px
+        width: 36px
+        content: ''
+    .right_callout
+      right: 0
+      &:before
+        border-top: 2px solid #242424
+        border-bottom: 2px solid #242424
+        height: 10px
+        width: 36px
+        content: ''
+    .installation
+      width: 670px
+      margin: 50px auto 0
+      &:before
+        background: transparent url("/images/bg_lines2.png") 0 0 no-repeat
+        content: ''
+        width: 439px
+        height: 51px
+        position: absolute
+        top: -52px
+        left: 115px
+    .usage
+      width: 100%
+      margin-top: 51px
+      article
+        margin-bottom: 60px
+        &.nomargin-bottom
+          margin-bottom: 0
+      &:before
+        background: transparent url("/images/bg_lines3.png") 0 0 no-repeat
+        content: ''
+        width: 581px
+        height: 51px
+        position: absolute
+        top: -52px
+        left: 205px
+    .contribute
+      width: 670px
+      margin: 37px auto 0
+      &:before
+        background: transparent url("/images/bg_lines4.png") 0 0 no-repeat
+        content: ''
+        width: 553px
+        height: 37px
+        position: absolute
+        top: -38px
+        left: 60px
+    .credits
+      text-align: center
+      width: 540px
+      padding: 15px
+      margin: 34px auto 70px
+      p
+        font: 16px "Economica", sans-serif
+        text-transform: uppercase
+        color: #5d5b5b
+        margin-bottom: 0
+        a
+          color: #415c53
+          &:hover
+            color: lighten(#415c53, 15%)
+            +transition(.5s)
+      &:before
+        background: transparent url("/images/bg_lines5.png") 0 0 no-repeat
+        content: ''
+        width: 352px
+        height: 35px
+        position: absolute
+        top: -36px
+        left: 82px

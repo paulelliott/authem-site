@@ -1,1 +1,245 @@
-= RDiscount.new(File.read("views/_content.markdown"), :smart).to_html
+!!! 5
+%html(lang="en-US")
+  %head
+    %title Authem, an Email-Based Authentication Library for Ruby Web Apps
+    %meta(charset="UTF-8")
+    -# %meta{:name => "viewport", :content => "width=device-width, initial-scale=.7, maximum-scale=1"}
+    /[if IE]
+      = javascript_include_tag "html5"
+    = stylesheet_link_tag "application"
+  %body
+
+    %header
+      .wrapper
+        %h1
+          Authem
+
+    %section.content
+      .wrapper
+
+        %h2.box
+          An Email-Based Authentication Library for Ruby Web Apps
+
+        .intro.box
+          %p
+            Authem is an email-based authentication library for Ruby web applications. It
+            %em only
+            supports email/password authentication. It does not automatically integrate with Twitter, Facebook, or whatever OAuth or SSO service you like the best. It is meant to handle user security but allow you to fully customize your user account behavior because the code is all yours.
+
+        .left_callout.box
+          %h5 Compatibility
+          %p Authem is tested against Ruby 1.9.2, 1.9.3, 2.0.0, and Rubinius.
+
+        .right_callout.box
+          %h5 Code Quality
+          = link_to "http://travis-ci.org/paulelliott/authem", target: :_blank do
+            = image_tag "https://api.travis-ci.org/paulelliott/authem.png", alt: "Build status"
+          = link_to "https://codeclimate.com/github/paulelliott/authem", target: :_blank do
+            = image_tag "https://codeclimate.com/github/paulelliott/authem.png", alt: "Code Climate score"
+
+        .installation.box
+          %h3 Installation
+          %p Add the following to your project&rsquo;s Gemfile:
+          %pre
+            %code
+              gem 'authem';
+          %p Or for Rails 4:
+          %pre.nomargin-bottom
+            %code
+              gem 'authem', github: 'paulelliott/authem', branch: 'rails4'
+
+        .usage.box
+          %h3 Usage
+
+          %article
+            %h4 Model Setup
+            %p
+              Tell Authem which of your classes will be used for authentication in
+              %code config/initializers/authem.rb
+            %pre
+              %code
+                :preserve
+                  Authem.configure do |config|
+                    config.user_class = User
+                  end
+            %p Once you’ve decided which class to use for authentication, make sure it has the right stuff in the database.
+            %pre
+              %code
+                :preserve
+                  create_table :users do |t|
+                    t.column :email, :string
+                    t.column :password_digest, :string
+                    t.column :remember_token, :string
+                    t.column :reset_password_token, :string
+                    t.column :session_token, :string
+                  end
+            %p Then in your model:
+            %pre
+              %code
+                include Authem::user
+
+          %article
+            %h4 Model Usage
+
+            %p Now that your class is all set up using Authem&hellip;
+
+            %p Provide your instance with the following attributes:
+
+            %ul
+              %li email
+              %li password
+              %li password_confirmation
+
+            %p Example:
+
+            %pre
+              %code
+                :preserve
+                  User.new(
+                    email: 'matt@example.com',
+                    password: '$ushi',
+                    password_confirmation: '$ushi'
+                  )
+
+            %p
+              When saved, the password is hashed and stored as
+              %code password_digest
+              in your database.
+
+          %article
+
+            %h4 Controller Usage
+
+            %p In your application controller:
+            %pre
+              %code
+                include Authem::ControllerSupport
+
+            %p Which gives you access to:
+
+            %ul
+              %li
+                %code sign_in
+              %li
+                %code sign_out
+              %li
+                %code current_user
+              %li
+                %code require_user
+              %li
+                %code signed_in?
+              %li
+                %code redirect_back_or_to
+
+            %p Then require authentication for a whole controller or action(s) with:
+            %pre
+              %code
+                before_filter :require_user, only: [:edit, :update]
+
+            %p Or get even crazier:
+            %pre
+              %code
+                :preserve
+                  before_filter :maybe_require_user_under_certain_circumstances
+
+                  private
+
+                  def maybe_require_user_under_certain_circumstances
+                    require_user if sky.blue? and rain.expected?
+                  end
+
+            %p For signing in/out users, try a SessionsController like the following:
+            %pre
+              %code
+                :preserve
+                  class UserSessionsController < ApplicationController
+                  //works best with decent_exposure :)
+                  expose(:user) { User.find_by_email(params[:email]) }
+
+                  // expects params: { email: 'foo@example.com', password: 'bar' }
+                  def create
+                    if user && user.authenticate(params[:password])
+                      sign_in(user)
+                      redirect_back_or_to(:profile)
+                    else
+                      flash.now.alert = "Your email and password do not match"
+                      render :new
+                    end
+                  end
+
+                  def destroy
+                    sign_out
+                    redirect_to :root
+                  end
+                end
+
+            %p Resetting passwords is a little move involved, but would look like this:
+            %pre
+              %code
+                :preserve
+                  class PasswordResetsController < ApplicationController
+                    //works best with decent_exposure :)
+                    expose(:user_by_email) { User.find_by_email(params[:email]) }
+                    expose(:user_by_token) { User.find_by_reset_password_token(params[:id]) }
+                    expose(:reset_password_email) { UserMailer.reset_password_email(user_by_email) }
+
+                    before_filter :verify_user, only: [:edit, :update]
+
+                    // expects params: { email: 'foo@example.com' }
+                    def create
+                      reset_password_email.deliver if user_by_email
+                      redirect_to [:new, :password_reset], alert: "Instructions for resetting your password have been sent to \#{params[:email]}"
+                    end
+
+                    // expects params: { user: { password: 'bar', password_confirmation: 'bar' } }
+                    def update
+                      if user_by_token.reset_password(params[:user][:password], params[:user][:password_confirmation])
+                        sign_in(user_by_token)
+                        redirect_to :root
+                      else
+                        render :edit
+                      end
+                    end
+
+                    protected
+
+                    def verify_user
+                      unless user_by_token
+                        redirect_to [:new, :password_reset], alert: "We can't find your account with that token. You should try requesting another one."
+                      end
+                    end
+                  end
+
+          %article.nomargin-bottom
+            %h3 Configuration
+
+            %p Authem lets you configure the user class:
+            %pre.nomargin-bottom
+              %code
+                :preserve
+                  Authem.configure do |config|
+                    config.user_class   = Admin
+                  end
+
+        .contribute.box
+          %h3 Contribute
+          %p
+            Authem&rsquo;s source code is
+            = succeed '.' do
+              = link_to "available on Github", "https://github.com/paulelliott/authem", target: :_blank
+          %p Pull requests are welcome; please provide spec coverage for new code.
+
+          %ul.nomargin-bottom
+            %li
+              %code bundle install
+            %li.nomargin-bottom
+              %code rake
+
+        .credits.box
+          %p
+            Developed &amp; maintained by
+            = link_to "Paul Elliott", "https://www.twitter.com/p_elliott", target: :_blank
+            &amp; designed by
+            =link_to "Rye Mason", "https://www.twitter.com/ryenotbread", target: :_blank
+            at
+            =link_to "Hashrocket", "http://www.hashrocket.com", target: :_blank
