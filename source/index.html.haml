@@ -42,7 +42,7 @@
           %p Add the following to your project&rsquo;s Gemfile:
           %pre.nomargin-bottom
             %code
-              gem 'authem';
+              gem 'authem'
 
         .usage.box
           %h3 Usage
@@ -79,14 +79,7 @@
 
             %p Now that your class is all set up using Authem&hellip;
 
-            %p Provide your instance with the following attributes:
-
-            %ul
-              %li email
-              %li password
-              %li password_confirmation
-
-            %p Example:
+            %p Provide your instance with the necessary attributes:
 
             %pre
               %code
@@ -144,50 +137,64 @@
                     require_user if sky.blue? and rain.expected?
                   end
 
+            %p If you require sign in for whole controllers often, you can create an AuthenticatedController to extend from:
+
+            %pre
+              %code
+                :preserve
+                  class AuthenticatedController < ApplicationController
+                    before_filter :require_user
+
+                    # more things that everything cares about
+                  end
+
+                  class MyOtherController < AuthenticatedController
+                  end
+
             %p For signing in/out users, try a SessionsController like the following:
             %pre
               %code
                 :preserve
                   class UserSessionsController < ApplicationController
-                  //works best with decent_exposure :)
-                  expose(:user) { User.find_by_email(params[:email]) }
+                    # works best with decent_exposure :)
+                    expose(:user) { User.find_by_email(params[:email]) }
 
-                  // expects params: { email: 'foo@example.com', password: 'bar' }
-                  def create
-                    if user && user.authenticate(params[:password])
-                      sign_in(user)
-                      redirect_back_or_to(:profile)
-                    else
-                      flash.now.alert = "Your email and password do not match"
-                      render :new
+                    # expects params: { email: 'foo@example.com', password: 'bar' }
+                    def create
+                      if user && user.authenticate(params[:password])
+                        sign_in(user)
+                        redirect_back_or_to(:profile)
+                      else
+                        flash.now.alert = "Your email and password do not match"
+                        render :new
+                      end
+                    end
+
+                    def destroy
+                      sign_out
+                      redirect_to :root
                     end
                   end
-
-                  def destroy
-                    sign_out
-                    redirect_to :root
-                  end
-                end
 
             %p Resetting passwords is a little more involved, but would look like this:
             %pre
               %code
                 :preserve
                   class PasswordResetsController < ApplicationController
-                    //works best with decent_exposure :)
+                    # works best with decent_exposure :)
                     expose(:user_by_email) { User.find_by_email(params[:email]) }
                     expose(:user_by_token) { User.find_by_reset_password_token(params[:id]) }
                     expose(:reset_password_email) { UserMailer.reset_password_email(user_by_email) }
 
                     before_filter :verify_user, only: [:edit, :update]
 
-                    // expects params: { email: 'foo@example.com' }
+                    # expects params: { email: 'foo@example.com' }
                     def create
                       reset_password_email.deliver if user_by_email
                       redirect_to [:new, :password_reset], alert: "Instructions for resetting your password have been sent to \#{params[:email]}"
                     end
 
-                    // expects params: { user: { password: 'bar', password_confirmation: 'bar' } }
+                    # expects params: { user: { password: 'bar', password_confirmation: 'bar' } }
                     def update
                       if user_by_token.reset_password(params[:user][:password], params[:user][:password_confirmation])
                         sign_in(user_by_token)
