@@ -11,14 +11,12 @@
 
     %header
       .wrapper
-        %h1
-          Authem
+        %h1 Authem
 
     %section.content
       .wrapper
 
-        %h2.box
-          An Email-Based Authentication Library for Ruby Web Apps
+        %h2.box An Email-Based Authentication Library for Ruby Web Apps
 
         .intro.box
           %p
@@ -28,7 +26,7 @@
 
         .left_callout.box
           %h5 Compatibility
-          %p Authem is tested against Ruby 1.9.3, 2.0.0, and Rubinius.
+          %p Authem requires Rails 4 and is actively tested against Ruby 2.0.0 and 2.1.1.
 
         .right_callout.box
           %h5 Code Quality
@@ -39,47 +37,42 @@
 
         .installation.box
           %h3 Installation
+
           %p Add the following to your project&rsquo;s Gemfile:
-          %pre.nomargin-bottom
+          %pre
             %code
               gem 'authem'
+
+          %p Run the generators to create the tables for users and sessions.
+          %pre
+            %code
+              :preserve
+                rails g authem:user
+                rails g authem:session
+
+          %p Tell your controllers what model you are using authem with.
+          %pre
+            %code
+              :preserve
+                class ApplicationController < ActionController::Base
+                  authem_for :user
+                  ...
+
+          %p Tell your model just how authem it is.
+          %pre.nomargin-bottom
+            %code
+              :preserve
+                class User < ActiveRecord::Base
+                  include Authem::User
+                  ...
 
         .usage.box
           %h3 Usage
 
-          %article
-            %h4 Model Setup
-            %p
-              Tell Authem which of your classes will be used for authentication in
-              %code config/initializers/authem.rb
-            %pre
-              %code
-                :preserve
-                  Authem.configure do |config|
-                    config.user_class = User
-                  end
-            %p Once you’ve decided which class to use for authentication, make sure it has the right stuff in the database.
-            %pre
-              %code
-                :preserve
-                  create_table :users do |t|
-                    t.column :email, :string
-                    t.column :password_digest, :string
-                    t.column :remember_token, :string
-                    t.column :reset_password_token, :string
-                    t.column :session_token, :string
-                  end
-            %p Then in your model:
-            %pre
-              %code
-                include Authem::User
-
-          %article
+          %article.nomargin-bottom
             %h4 Model Usage
 
-            %p Now that your class is all set up using Authem&hellip;
-
-            %p Provide your instance with the necessary attributes:
+            %p You can make users the normal way. Passwords will automatically be salted and bcrypted.
 
             %pre
               %code
@@ -90,80 +83,56 @@
                     password_confirmation: '$ushi'
                   )
 
-            %p
-              When saved, the password is hashed and stored as
-              %code password_digest
-              in your database.
+            %p Resetting passwords has never been easier.
 
-          %article
+            %pre
+              %code user.reset_password('new_password', 'new_password')
 
+            %p You will also always have a token available when you need to reset passwords.
+
+            %pre
+              %code user.password_reset_token
+
+          %article.nomargin-bottom
             %h4 Controller Usage
 
             %p In your application controller:
             %pre
-              %code
-                include Authem::ControllerSupport
+              %code authem_for :user
 
             %p Which gives you access to:
 
             %ul
               %li
-                %code sign_in
+                %code sign_in(user)
               %li
-                %code sign_out
+                %code sign_out_user
               %li
                 %code current_user
               %li
                 %code require_user
               %li
-                %code signed_in?
+                %code user_signed_in?
               %li
-                %code redirect_back_or_to
+                %code redirect_back_or_to(some_awesome_default_path)
+              %li
+                %code clear_all_sessions_for(user)
 
-            %p Then require authentication for a whole controller or action(s) with:
+            %p Then require authentication in your controllers with a filter:
             %pre
-              %code
-                before_filter :require_user, only: [:edit, :update]
+              %code before_filter :require_user
 
-            %p Or get even crazier:
-            %pre
-              %code
-                :preserve
-                  before_filter :maybe_require_user_under_certain_circumstances
-
-                  private
-
-                  def maybe_require_user_under_certain_circumstances
-                    require_user if sky.blue? and rain.expected?
-                  end
-
-            %p If you require sign in for whole controllers often, you can create an AuthenticatedController to extend from:
-
+            %p For signing in/out users, try a SessionsController like this:
             %pre
               %code
                 :preserve
-                  class AuthenticatedController < ApplicationController
-                    before_filter :require_user
+                  class SessionsController < ApplicationController
 
-                    # more things that everything cares about
-                  end
-
-                  class MyOtherController < AuthenticatedController
-                  end
-
-            %p For signing in/out users, try a SessionsController like the following:
-            %pre
-              %code
-                :preserve
-                  class UserSessionsController < ApplicationController
-                    # works best with decent_exposure :)
-                    expose(:user) { User.find_by_email(params[:email]) }
-
-                    # expects params: { email: 'foo@example.com', password: 'bar' }
                     def create
+                      user = User.find_by(email: params[:email].downcase)
                       if user && user.authenticate(params[:password])
                         sign_in(user)
-                        redirect_back_or_to(:profile)
+                        redirect_back_or_to(root_path)
                       else
                         flash.now.alert = "Your email and password do not match"
                         render :new
@@ -171,32 +140,30 @@
                     end
 
                     def destroy
-                      sign_out
+                      sign_out_user
                       redirect_to :root
                     end
+
                   end
 
-            %p Resetting passwords is a little more involved, but would look like this:
-            %pre
+            %p Resetting passwords could look something like this:
+            %pre.nomargin-bottom
               %code
                 :preserve
                   class PasswordResetsController < ApplicationController
-                    # works best with decent_exposure :)
-                    expose(:user_by_email) { User.find_by_email(params[:email]) }
-                    expose(:user_by_token) { User.find_by_reset_password_token(params[:id]) }
-                    expose(:reset_password_email) { UserMailer.reset_password_email(user_by_email) }
 
                     before_filter :verify_user, only: [:edit, :update]
 
-                    # expects params: { email: 'foo@example.com' }
                     def create
-                      reset_password_email.deliver if user_by_email
-                      redirect_to [:new, :password_reset], alert: "Instructions for resetting your password have been sent to \#{params[:email]}"
+                      if user = User.find_by(email: params[:email].downcase)
+                        UserMailer.reset_password_email(user)
+                      end
+
+                      redirect_to [:new, :password_reset], alert: "Instructions for resetting your password have been sent."
                     end
 
-                    # expects params: { user: { password: 'bar', password_confirmation: 'bar' } }
                     def update
-                      if user_by_token.reset_password(params[:user][:password], params[:user][:password_confirmation])
+                      if user_by_token.reset_password(params[:password], params[:password_confirmation])
                         sign_in(user_by_token)
                         redirect_to :root
                       else
@@ -206,22 +173,16 @@
 
                     protected
 
+                    def user_by_token
+                      @user_by_token ||= User.find_by_reset_password_token(params[:id])
+                    end
+
                     def verify_user
                       unless user_by_token
-                        redirect_to [:new, :password_reset], alert: "We can't find your account with that token. You should try requesting another one."
+                        redirect_to [:new, :password_reset], alert: "We can't find your account with that token."
                       end
                     end
-                  end
 
-          %article.nomargin-bottom
-            %h3 Configuration
-
-            %p Authem lets you configure the user class:
-            %pre.nomargin-bottom
-              %code
-                :preserve
-                  Authem.configure do |config|
-                    config.user_class   = Admin
                   end
 
         .contribute.box
@@ -234,15 +195,18 @@
 
           %ul.nomargin-bottom
             %li
-              %code bundle install
+              %code bundle
             %li.nomargin-bottom
               %code rake
 
         .credits.box
           %p
             Developed &amp; maintained by
-            = link_to "Paul Elliott", "https://www.twitter.com/p_elliott", target: :_blank
-            &amp; designed by
-            =link_to "Rye Mason", "https://www.twitter.com/ryenotbread", target: :_blank
+            = link_to "Paul Elliott", "https://www.github.com/paulelliott", target: :_blank
+            &amp;
+            = link_to "Pavel Pravosud", "https://www.github.com/rwz", target: :_blank
+          %p
+            Designed by
+            = link_to "Rye Mason", "https://www.twitter.com/ryenotbread", target: :_blank
             at
             =link_to "Hashrocket", "http://www.hashrocket.com", target: :_blank
