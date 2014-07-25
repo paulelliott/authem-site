@@ -38,7 +38,14 @@
         .installation.box
           %h3 Installation
 
-          %p Add the following to your project&rsquo;s Gemfile:
+          %p
+            First you'll need to pick what class you will be using with authem.
+            It can be named whatever you'd like, but for this guide we'll
+            assume you went with
+            %code User
+            \.
+
+          %p To get started, add the following to your project&rsquo;s Gemfile:
           %pre
             %code
               gem 'authem'
@@ -47,7 +54,7 @@
           %pre
             %code
               :preserve
-                rails g authem:user
+                rails g authem:user &lt;model_name - defaults to "user"&gt;
                 rails g authem:session
 
           %p Tell your controllers what model you are using authem with.
@@ -55,7 +62,7 @@
             %code
               :preserve
                 class ApplicationController < ActionController::Base
-                  authem_for :user
+                  authem_for :user  #or whatever your authem class is
                   ...
 
           %p Tell your model just how authem it is.
